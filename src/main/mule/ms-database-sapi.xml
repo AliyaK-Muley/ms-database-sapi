@@ -8,7 +8,7 @@
         <db:my-sql-connection host="localhost" port="3306" user="root" password="Ali#14ya#25" database="accountdb" />
     </db:config>
     <flow name="ms-database-sapi-main">
-        <http:listener config-ref="ms-database-sapi-httpListenerConfig" path="/api/*" outputMimeType="application/json" allowedMethods="GET,POST,PUT,DELETE">
+        <http:listener config-ref="ms-database-sapi-httpListenerConfig" path="/api/*" outputMimeType="application/json" allowedMethods="GET,POST,PUT,DELETE" doc:name="Listener ABC">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
             </http:response>
@@ -155,13 +155,13 @@ output application/json
             <db:input-parameters><![CDATA[#[{
 	accountID: payload.accountID,
     name: payload.name,
-    phoneNo1: payload.phoneNo1,
-    phoneNo2: payload.phoneNo2,
-    address: payload.address,
-    zipCode: payload.zipCode,
-    city: payload.city,
-    state: payload.state,
-    countryCode: payload.countryCode
+    phoneNo1: payload.contactDetails.phoneNo1,
+    phoneNo2: payload.contactDetails.phoneNo2,
+    address: payload.contactDetails.address,
+    zipCode: payload.contactDetails.zipCode,
+    city: payload.contactDetails.city,
+    state: payload.contactDetails.state,
+    countryCode: payload.contactDetails.countryCode
 }]]]></db:input-parameters>
         </db:insert>
         <ee:transform doc:name="Transform Message" doc:id="f3616649-6cfd-4634-b9a0-e881b7ad9f52">
