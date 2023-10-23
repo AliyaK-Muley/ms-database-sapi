@@ -7,7 +7,7 @@
     <db:config name="Database_Config" doc:name="Database Config" doc:id="526a84f9-28d9-4aaf-9748-0397505cbdcb">
         <db:my-sql-connection host="localhost" port="3306" user="root" password="Ali#14ya#25" database="accountdb" />
     </db:config>
-    <flow name="ms-database-sapi-main">
+	<flow name="ms-database-sapi-main">
         <http:listener config-ref="ms-database-sapi-httpListenerConfig" path="/api/*" outputMimeType="application/json" allowedMethods="GET,POST,PUT,DELETE" doc:name="Listener ABC">
             <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
@@ -128,22 +128,33 @@ output application/json
     </flow>
     <flow name="put:\account\updateAccount:application\json:ms-database-sapi-config">
 		<db:update doc:name="Update" doc:id="2c16e510-1160-4f85-9314-79df9b581353" config-ref="Database_Config">
-			<db:sql ><![CDATA[update account set name =:name where accountID= :accountID;]]></db:sql>
+			<db:sql ><![CDATA[update account set name =:name,accountNumber =:accountNumber,phoneNo1 =:phoneNo1, phoneNo2 =:phoneNo2, address =:address, zipCode =:zipCode, city =:city, state =:state, countryCode =:countryCode  where accountID= :accountID;]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	name: payload.name,
-	accountID : payload.accountID
+	accountNumber: payload.accountNumber,
+	accountID : payload.accountID,
+	phoneNo1: payload.contactDetails.phoneNo1,
+    phoneNo2: payload.contactDetails.phoneNo2,
+    address: payload.contactDetails.address,
+    zipCode: payload.contactDetails.zipCode,
+    city: payload.contactDetails.city,
+    state: payload.contactDetails.state,
+    countryCode: payload.contactDetails.countryCode
+	
 }]]]></db:input-parameters>
 		</db:update>
 		<ee:transform doc:name="Transform Message">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
+
 output application/json
 ---
 {
   status: "Success",
-  message: {
+  message: 
+  {
     code: 200,
-    description: "Account Updated Successfully for accountname having <Account ID>"
+    description: "Account Created Successfully for " 
   }
 }]]></ee:set-payload>
             </ee:message>
@@ -151,9 +162,10 @@ output application/json
     </flow>
     <flow name="post:\account\createAccount:application\json:ms-database-sapi-config">
         <db:insert doc:name="Insert" doc:id="5102f7cd-990c-4764-af14-7981320e9348" config-ref="Database_Config">
-            <db:sql><![CDATA[INSERT INTO account(accountID, name, phoneNo1, phoneNo2, address, zipCode, city, state, countryCode) VALUES (:accountID, :name, :phoneNo1, :phoneNo2, :address, :zipCode, :city, :state,:countryCode) ;]]></db:sql>
+            <db:sql><![CDATA[INSERT INTO account(accountID, accountNumber,name, phoneNo1, phoneNo2, address, zipCode, city, state, countryCode) VALUES (:accountID, :accountNumber,:name, :phoneNo1, :phoneNo2, :address, :zipCode, :city, :state,:countryCode) ;]]></db:sql>
             <db:input-parameters><![CDATA[#[{
 	accountID: payload.accountID,
+	accountNumber: payload.accountNumber,
     name: payload.name,
     phoneNo1: payload.contactDetails.phoneNo1,
     phoneNo2: payload.contactDetails.phoneNo2,
@@ -164,49 +176,35 @@ output application/json
     countryCode: payload.contactDetails.countryCode
 }]]]></db:input-parameters>
         </db:insert>
-        <ee:transform doc:name="Transform Message" doc:id="f3616649-6cfd-4634-b9a0-e881b7ad9f52">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
 		<ee:transform doc:name="Transform Message">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
+
 output application/json
 ---
 {
   status: "Success",
-  message: {
+  message: 
+  {
     code: 200,
-    description: "Account Created Successfully for <Account Name> having <Account ID>"
+    description: "Account Created Successfully for "   
   }
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
     </flow>
-    <flow name="get:\account\fetchAccount\(accountID):ms-database-sapi-config">
+	<flow name="get:\account\fetchAccount\(accountID):ms-database-sapi-config">
         <ee:transform doc:name="Transform Message">
             <ee:variables>
                 <ee:set-variable variableName="accountID">attributes.uriParams.'accountID'</ee:set-variable>
             </ee:variables>
         </ee:transform>
         <db:select doc:name="Select" doc:id="8406925d-0290-4496-bdfa-c52fe1d83f54" config-ref="Database_Config">
-            <db:sql><![CDATA[Select * from account where accoundID= :accountID;]]></db:sql>
-            <db:input-parameters><![CDATA[#[{
+            <db:sql ><![CDATA[${file::sql/select-query.sql}]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
 	accountID: vars.accountID
 }]]]></db:input-parameters>
         </db:select>
-		<ee:transform doc:name="Transform Message" doc:id="d475ef5b-74b0-46f4-b0d2-bca7b9f99886">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
 		<ee:transform doc:name="Transform Message" doc:id="e7629f6d-5125-46fc-9d75-99831eda1ebd">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
