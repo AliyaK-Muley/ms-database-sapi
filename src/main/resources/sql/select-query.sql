@@ -1,1 +1,1 @@
-Select * from account where accountID= :accountID
+Select * from accountdb.account where accountID= :accountID
