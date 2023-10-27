@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="errorHandlerSub_Flow" doc:id="86aa6552-5d29-4cd2-9d10-7c691904f3da" >
+		<ee:transform doc:name="Transform Message" doc:id="47700607-c0bd-44a3-9854-ecf98c04ca04">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status: "Failure",
+	message:
+	{
+		code : vars.httpStatus,
+		description : (error.errorType.asString default "" ) ++ " " ++ error.detailedDescription 
+	}
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		<logger level="ERROR" doc:name="Logger" doc:id="936ec76b-1f82-4f69-94bd-283eeefdbab0" message="error.description" category="errorHandlerSub_Flow"/>
+	</sub-flow>
+	<error-handler name="errorHandlerError_Handler" doc:id="5ce3d3a2-5c60-4148-8f3b-690be371da38" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="b49dd238-269f-48a7-85b5-7569562f1f18" type="APIKIT:BAD_REQUEST" >
+			<set-variable value="400" doc:name="Set Variable" doc:id="03ea56e1-1e51-4805-be02-0e86dbd4a61e" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="e9020317-fc31-4319-a2b0-6de30cf989e7" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate1" doc:id="a60c7762-5d54-45b9-bff1-0315458cd2b9" type="APIKIT:NOT_FOUND" >
+			<set-variable value="404" doc:name="Set Variable" doc:id="9d101821-a3bd-4e8c-97e8-511387298d26" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="d5f8f835-69c3-414a-a31a-d2fe7fe68a65" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate2" doc:id="1fad21eb-088b-46ca-b9bc-d6fa7a3547a2" type="APIKIT:METHOD_NOT_ALLOWED" >
+			<set-variable value="405" doc:name="Set Variable" doc:id="511aec20-93df-4d41-b38c-091a640bb37a" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="1de0200b-63b3-44ac-8bb9-746205bcd632" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate3" doc:id="96646060-d7b2-4402-b945-d925f77e0a5a" type="APIKIT:NOT_ACCEPTABLE" >
+			<set-variable value="406" doc:name="Set Variable" doc:id="3df6c4ed-4bcf-4219-ba1b-e6d6fd6441f5" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="69cb15ad-360b-4fa5-9b8f-c3040c3c296d" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate4" doc:id="490c3f10-c229-4662-b951-0a5d49d0c8c0" type="APIKIT:UNSUPPORTED_MEDIA_TYPE" >
+			<set-variable value="415" doc:name="Set Variable" doc:id="03a886ff-69c8-4d02-bd2c-e0ddf8e57093" variableName="httpStatus" />
+			<flow-ref doc:name="Flow Reference" doc:id="179ba319-9c49-4877-85e5-d032922ed6d6" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate5" doc:id="ae279c2f-8763-4afd-91ca-ca6beb796c13" type="APIKIT:NOT_IMPLEMENTED" >
+			<set-variable value="501" doc:name="Set Variable" doc:id="9ce38d71-e736-4fc5-ba82-3c7056572430" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="c548f16f-890b-414c-bf99-dbf5689e9a36" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate6" doc:id="a84cb5de-70b2-49df-adae-fc65cc16ca36" type="API:DATA_TYPE_NOT_FOUND">
+			<set-variable value="422" doc:name="Set Variable" doc:id="668cde0f-0f41-4b2e-b444-d828acd139ca" variableName="httpStatus"/>
+			<flow-ref doc:name="Flow Reference" doc:id="73e96497-ec08-4fe9-b2db-ddbc26a0c3fe" name="errorHandlerSub_Flow"/>
+		</on-error-propagate>
+	</error-handler>
+</mule>

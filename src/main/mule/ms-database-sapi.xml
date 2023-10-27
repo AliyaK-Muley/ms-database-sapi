@@ -3,7 +3,7 @@
     <http:listener-config name="ms-database-sapi-httpListenerConfig">
         <http:listener-connection host="0.0.0.0" port="8081" />
     </http:listener-config>
-    <apikit:config name="ms-database-sapi-config" api="resource::110f174b-223c-482b-9e4b-1eae76c3f526:ms-database-sapi:1.0.2:raml:zip:ms-database-sapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <apikit:config name="ms-database-sapi-config" api="resource::110f174b-223c-482b-9e4b-1eae76c3f526:ms-database-sapi:1.0.3:raml:zip:ms-database-sapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
     <db:config name="Database_Config" doc:name="Database Config" doc:id="526a84f9-28d9-4aaf-9748-0397505cbdcb">
         <db:my-sql-connection host="localhost" port="3306" user="root" password="Ali#14ya#25" database="accountdb" />
     </db:config>
@@ -18,86 +18,7 @@
             </http:error-response>
         </http:listener>
         <apikit:router config-ref="ms-database-sapi-config" />
-        <error-handler>
-            <on-error-propagate type="APIKIT:BAD_REQUEST">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Bad request"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_FOUND">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Resource not found"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Method not allowed"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Not acceptable"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Unsupported media type"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Not Implemented"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-        </error-handler>
+		<error-handler ref="errorHandlerError_Handler" />
     </flow>
     <flow name="ms-database-sapi-console">
         <http:listener config-ref="ms-database-sapi-httpListenerConfig" path="/console/*">
@@ -110,24 +31,24 @@ output application/json
             </http:error-response>
         </http:listener>
         <apikit:console config-ref="ms-database-sapi-config" />
-        <error-handler>
-            <on-error-propagate type="APIKIT:NOT_FOUND">
-                <ee:transform doc:name="Transform Message">
-                    <ee:message>
-                        <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{message: "Resource not found"}]]></ee:set-payload>
-                    </ee:message>
-                    <ee:variables>
-                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
-                    </ee:variables>
-                </ee:transform>
-            </on-error-propagate>
-        </error-handler>
     </flow>
     <flow name="put:\account\updateAccount:application\json:ms-database-sapi-config">
+		<ee:transform doc:name="Transform Message" doc:id="a0316180-f5b7-4ccb-914f-377d507f7a1c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="accountDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+ {
+ 	"name": payload.name as String,
+ 	"accountID": payload.accountID as Number
+ }
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<db:update doc:name="Update" doc:id="2c16e510-1160-4f85-9314-79df9b581353" config-ref="Database_Config">
+			<error-mapping sourceType="DB:CONNECTIVITY" targetType="API:DATA_TYPE_NOT_FOUND" />
 			<db:sql ><![CDATA[update account set name =:name,accountNumber =:accountNumber,phoneNo1 =:phoneNo1, phoneNo2 =:phoneNo2, address =:address, zipCode =:zipCode, city =:city, state =:state, countryCode =:countryCode  where accountID= :accountID;]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	name: payload.name,
@@ -146,7 +67,6 @@ output application/json
 		<ee:transform doc:name="Transform Message">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
-
 output application/json
 ---
 {
@@ -154,14 +74,61 @@ output application/json
   message: 
   {
     code: 200,
-    description: "Account Created Successfully for " 
-  }
+    description: "Account Created Successfully " ++ (vars.accountDetails.name) ++ " for  having " ++ (vars.accountDetails.accountID) ++ " "   
+    }
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1c95322e-4e62-4edf-87a2-5a14891a706b" type="ANY">
+				<raise-error doc:name="Raise error" doc:id="129ef16c-32fe-4298-8a7d-e9df30e35789" type="API:DATA_TYPE_NOT_FOUND"/>
+			</on-error-propagate>
+		</error-handler>
     </flow>
     <flow name="post:\account\createAccount:application\json:ms-database-sapi-config">
-        <db:insert doc:name="Insert" doc:id="5102f7cd-990c-4764-af14-7981320e9348" config-ref="Database_Config">
+		<try doc:name="Try" doc:id="0d2c8fee-6b8c-4ec6-82e3-f72e67af0cad" >
+			<ee:transform doc:name="Transform Message" doc:id="cabe9f13-0023-422a-9e97-3af11848673b">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="accountDetails"><![CDATA[%dw 2.0import * from dw::Runtime
+
+output application/json
+
+---
+ {
+ 	"name": if(typeOf(payload.name)== String) payload.name else fail('Name should be a String')  ,
+    "accountID": if(typeOf(payload.accountID)== Number) payload.accountID else fail('Account ID should be a Number') 
+ 	
+ 	
+  }
+
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="afd44332-efcb-4fb2-827a-67337f2a8187" >
+					<set-variable value="422" doc:name="Set Variable" doc:id="56ef31ad-5497-4ce2-9a77-a7ec06dbd80a" variableName="httpStatus"/>
+					<ee:transform doc:name="Transform Message" doc:id="8083e685-9d84-42df-b5ba-af797a321231" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+import substringBefore from dw::core::Strings
+output application/json
+---
+{
+	status: "Failure",
+	message:
+	{
+		code : vars.httpStatus,
+		description : substringBefore(error.description,'|')
+	}
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<db:insert doc:name="Insert" doc:id="5102f7cd-990c-4764-af14-7981320e9348" config-ref="Database_Config">
             <db:sql><![CDATA[INSERT INTO account(accountID, accountNumber,name, phoneNo1, phoneNo2, address, zipCode, city, state, countryCode) VALUES (:accountID, :accountNumber,:name, :phoneNo1, :phoneNo2, :address, :zipCode, :city, :state,:countryCode) ;]]></db:sql>
             <db:input-parameters><![CDATA[#[{
 	accountID: payload.accountID,
@@ -179,7 +146,6 @@ output application/json
 		<ee:transform doc:name="Transform Message">
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
-
 output application/json
 ---
 {
@@ -187,8 +153,8 @@ output application/json
   message: 
   {
     code: 200,
-    description: "Account Created Successfully for "   
-  }
+    description: "Account Created Successfully " ++ (vars.accountDetails.name) ++ " for  having " ++ (vars.accountDetails.accountID) ++ " "   
+    }
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
@@ -200,7 +166,7 @@ output application/json
             </ee:variables>
         </ee:transform>
         <db:select doc:name="Select" doc:id="8406925d-0290-4496-bdfa-c52fe1d83f54" config-ref="Database_Config">
-            <db:sql ><![CDATA[${file::sql/select-query.sql}]]></db:sql>
+            <db:sql ><![CDATA[${file::sql/select-query.sql}    ]]></db:sql>
 			<db:input-parameters><![CDATA[#[{
 	accountID: vars.accountID
 }]]]></db:input-parameters>
